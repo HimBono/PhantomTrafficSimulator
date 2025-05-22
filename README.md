@@ -1,2 +1,2 @@
 # PhantomTrafficSimulator
-Phantom traffic simulator using cartoon cars
+Phantom traffic simulator using pygame
