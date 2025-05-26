@@ -4,15 +4,8 @@ import pygame
 from constants import *
 
 def get_car_color(speed, max_speed):
-    """Return car color based on speed (Red=slow, Green=fast)"""
-    if speed < 0.2 * max_speed:
-        return (255, 0, 0)  # Red - very slow
-    elif speed < 0.5 * max_speed:
-        return (255, 165, 0)  # Orange - slow
-    elif speed < 0.8 * max_speed:
-        return (255, 255, 0)  # Yellow - moderate
-    else:
-        return (0, 255, 0)    # Green - fast
+    """Return a fixed car color optimized for computer vision detection"""
+    return (255, 255, 0)  # Bright yellow - optimal for CV detection
 
 class Car:
     def __init__(self, position, angle=0, speed=None):
@@ -26,7 +19,8 @@ class Car:
         self.x = 0  # Will be calculated in update
         self.y = 0  # Will be calculated in update
         self.braking = False
-        self.color = get_car_color(self.speed, SPEED_LIMIT)
+        self.is_random_braking = False  # Flag for random braking
+        self.color = get_car_color(self.speed, SPEED_LIMIT)  # Set initial color
         self.id = random.randint(100, 999)
         
         # Uniform behavior for all cars
@@ -37,8 +31,14 @@ class Car:
         self.brake_duration = 0
         self.brake_cooldown = 0
         
+        # Track type (will be set in update)
+        self.track_type = TRACK_TYPE_CIRCULAR  # Default to circular
+        
     def update(self, cars, track_type, paused, time_scale):
         """Update car position and behavior"""
+        # Update track type
+        self.track_type = track_type
+        
         # Update brake cooldown
         if self.brake_cooldown > 0:
             self.brake_cooldown -= 1
@@ -47,14 +47,18 @@ class Car:
         if self.brake_duration > 0:
             self.brake_duration -= 1
             self.braking = True
+            self.is_random_braking = True  # Set random braking flag
         else:
             # Random chance of braking (only if not on cooldown)
             if random.random() < RANDOM_BRAKE_CHANCE and not paused and self.brake_cooldown <= 0:
                 self.brake_duration = random.randint(15, 30)
                 self.brake_cooldown = 200
                 self.braking = True
+                self.is_random_braking = True  # Set random braking flag
+                self.speed *= 0.3  # Add sudden speed reduction for random braking
             else:
                 self.braking = False
+                self.is_random_braking = False  # Clear random braking flag
         
         # Find the car ahead
         next_car = None
@@ -89,13 +93,17 @@ class Car:
     
     def _apply_driving_behavior(self, next_car, min_distance, paused):
         """Apply car following and braking behavior"""
+        # Get appropriate distances based on track type
+        safe_distance = CIRCULAR_SAFE_DISTANCE if self.track_type == TRACK_TYPE_CIRCULAR else LINEAR_SAFE_DISTANCE
+        min_distance_threshold = CIRCULAR_MIN_DISTANCE if self.track_type == TRACK_TYPE_CIRCULAR else LINEAR_MIN_DISTANCE
+        
         # Collision prevention - emergency braking if too close
-        if next_car and min_distance < MIN_DISTANCE and not paused:
+        if next_car and min_distance < min_distance_threshold and not paused:
             self.speed = max(0, self.speed - DECELERATION * 3)
             self.braking = True
         # Normal driving behavior
         elif next_car and not paused:
-            safe_dist = max(SAFE_DISTANCE, self.speed * 8 / self.aggressiveness)
+            safe_dist = max(safe_distance, self.speed * 8 / self.aggressiveness)
             
             if min_distance < safe_dist:
                 # Too close, slow down
@@ -117,6 +125,7 @@ class Car:
         # Force braking if brake duration is active
         if self.brake_duration > 0 and not paused:
             self.speed = max(0.1, self.speed - DECELERATION * 1.5)
+            self.braking = True
     
     def _update_position(self, cars, track_type, paused, time_scale):
         """Update car position with collision checking"""
@@ -143,6 +152,9 @@ class Car:
     
     def _would_collide(self, cars, next_position, track_type):
         """Check if moving to next_position would cause a collision"""
+        # Get appropriate minimum distance based on track type
+        min_distance = CIRCULAR_MIN_DISTANCE if track_type == TRACK_TYPE_CIRCULAR else LINEAR_MIN_DISTANCE
+        
         for car in cars:
             if car != self:
                 if track_type == TRACK_TYPE_CIRCULAR:
@@ -156,7 +168,7 @@ class Car:
                         abs((car.position - next_position) % WIDTH)
                     )
                 
-                if next_dist < MIN_DISTANCE:
+                if next_dist < min_distance:
                     return True
         return False
     
@@ -177,5 +189,7 @@ class Car:
             self.brake_duration = random.randint(30, 45)
             self.brake_cooldown = 120
             self.speed *= 0.3
+            self.braking = True
+            self.is_random_braking = True  # Set the random braking flag
             return True
         return False

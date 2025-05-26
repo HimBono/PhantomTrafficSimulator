@@ -78,8 +78,20 @@ class Renderer:
         
         # Draw brake lights if braking
         if car.braking:
-            pygame.draw.rect(car_surface, (255, 0, 0), (0, 3, 4, 4), border_radius=1)
-            pygame.draw.rect(car_surface, (255, 0, 0), (0, CAR_HEIGHT - 7, 4, 4), border_radius=1)
+            if car.is_random_braking:
+                # Intense red brake lights for randomly braking car
+                brake_light_color = (255, 0, 0)  # Pure red
+                # Draw larger, more intense brake lights
+                pygame.draw.rect(car_surface, brake_light_color, (0, 1, 8, 8), border_radius=3)
+                pygame.draw.rect(car_surface, brake_light_color, (0, CAR_HEIGHT - 9, 8, 8), border_radius=3)
+                # Add a glow effect
+                pygame.draw.rect(car_surface, (255, 100, 100), (0, 1, 8, 8), border_radius=3, width=1)
+                pygame.draw.rect(car_surface, (255, 100, 100), (0, CAR_HEIGHT - 9, 8, 8), border_radius=3, width=1)
+            else:
+                # Normal brake lights for regular braking
+                brake_light_color = (255, 50, 50)  # Brighter red
+                pygame.draw.rect(car_surface, brake_light_color, (0, 2, 6, 6), border_radius=2)
+                pygame.draw.rect(car_surface, brake_light_color, (0, CAR_HEIGHT - 8, 6, 6), border_radius=2)
         
         # Rotate the car surface
         rotated_car = pygame.transform.rotate(car_surface, -math.degrees(car.angle))
@@ -127,38 +139,6 @@ class Renderer:
         for i, text in enumerate(settings):
             text_surface = self.font.render(text, True, (255, 255, 255))
             self.screen.blit(text_surface, (WIDTH - 160, 10 + i * 20))
-            
-        # Display legend
-        self._display_legend()
-    
-    def _display_legend(self):
-        """Display color legend for car speeds"""
-        legend = [
-            "Color Legend:",
-            "Red = Stopped/Very Slow",
-            "Orange = Slow",
-            "Yellow = Medium Speed",
-            "Green = Full Speed"
-        ]
-        
-        # Create legend background
-        legend_surface = pygame.Surface((160, len(legend) * 20 + 10), pygame.SRCALPHA)
-        legend_surface.fill((0, 0, 0, 150))
-        self.screen.blit(legend_surface, (WIDTH - 165, HEIGHT - len(legend) * 20 - 15))
-        
-        # Legend title
-        text_surface = self.font.render(legend[0], True, (255, 255, 255))
-        self.screen.blit(text_surface, (WIDTH - 160, HEIGHT - len(legend) * 20 - 5))
-        
-        # Legend color items
-        colors = [(255, 0, 0), (255, 165, 0), (255, 255, 0), (0, 255, 0)]
-        for i in range(1, len(legend)):
-            # Draw color sample
-            pygame.draw.rect(self.screen, colors[i-1], 
-                           (WIDTH - 160, HEIGHT - (len(legend) - i) * 20 - 5, 10, 10))
-            # Draw text
-            text_surface = self.font.render(legend[i], True, (255, 255, 255))
-            self.screen.blit(text_surface, (WIDTH - 145, HEIGHT - (len(legend) - i) * 20 - 5))
 
     def display_brake_alert(self, brake_alert, brake_alert_timer):
         """Display brake event alert"""
