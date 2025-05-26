@@ -1,0 +1,12 @@
+
+PHANTOM TRAFFIC DETECTED!
+Timestamp: 20250526_203107
+Track Type: circular
+Car Position: (450, 117)
+Car Speed: 1.00 pixels/frame
+Baseline Speed: 2.13 pixels/frame
+Speed Ratio: 0.47 (should be > 0.3)
+Stability Frames: 10
+Screenshot: phantom_screenshots/phantom_circular_20250526_203107.png
+        
+==================================================
