@@ -100,7 +100,7 @@ class Renderer:
         # Draw car
         self.screen.blit(rotated_car, car_rect)
 
-    def display_info(self, current_track_type, time_scale, paused):
+    def display_info(self, current_track_type, time_scale, paused, telemetry_stats=None):
         """Display controls and current settings"""
         # Display controls
         controls = [
@@ -131,14 +131,23 @@ class Renderer:
             f"Status: {'Paused' if paused else 'Running'}"
         ]
         
+        # Add telemetry stats if available
+        if telemetry_stats:
+            settings.extend([
+                f"Session: {telemetry_stats['session_id']}",
+                f"Frames: {telemetry_stats['frame_count']}",
+                f"Events: {telemetry_stats['total_events']}",
+                f"Brake Events: {telemetry_stats['brake_events']}"
+            ])
+        
         # Create settings background
-        settings_surface = pygame.Surface((160, len(settings) * 20 + 10), pygame.SRCALPHA)
+        settings_surface = pygame.Surface((200, len(settings) * 20 + 10), pygame.SRCALPHA)
         settings_surface.fill((0, 0, 0, 150))
-        self.screen.blit(settings_surface, (WIDTH - 165, 5))
+        self.screen.blit(settings_surface, (WIDTH - 205, 5))
         
         for i, text in enumerate(settings):
             text_surface = self.font.render(text, True, (255, 255, 255))
-            self.screen.blit(text_surface, (WIDTH - 160, 10 + i * 20))
+            self.screen.blit(text_surface, (WIDTH - 200, 10 + i * 20))
 
     def display_brake_alert(self, brake_alert, brake_alert_timer):
         """Display brake event alert"""
